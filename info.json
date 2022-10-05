@@ -1,0 +1,12 @@
+{
+    "name": "just-enough-items",
+    "version": "0.0.1",
+    "title": "Just Enough Items (JEI)",
+    "author": "Johnson1893",
+    "homepage": "",
+    "description": "An interface for searching for items, studying their production, and using them in other industries.\nSimilar to good old mod FNEI, but usefull!",
+    "factorio_version": "1.1",
+    "dependencies": [
+        "flib >= 0.11.2"
+    ]
+}
