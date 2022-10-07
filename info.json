@@ -1,12 +1,14 @@
 {
-    "name": "just-enough-items",
+    "name": "lighted-repair-turret",
     "version": "0.0.1",
-    "title": "Just Enough Items (JEI)",
+    "title": "Lighted Repair Turret",
     "author": "Johnson1893",
     "homepage": "",
-    "description": "An interface for searching for items, studying their production, and using them in other industries.\nSimilar to good old mod FNEI, but usefull!",
+    "description": "Crossover between Lighted Electric Poles Plus and Repai Turret mods!\nNow we can produce repair turret with integrated lamp or/and large electric pole!",
     "factorio_version": "1.1",
     "dependencies": [
+        "Repair_Turret >= 1.0.2",
+        "LightedPolesPlus >= 1.8.0",
         "flib >= 0.11.2"
     ]
 }
