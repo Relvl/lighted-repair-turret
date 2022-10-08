@@ -1,7 +1,10 @@
--- Отношение турели к столбу. См data-updates.lua
+-- Отношение турели к столбу, чтобы не искать долго. См data-updates.lua
 local turret_to_pole_map = {}
 turret_to_pole_map["repair-turret-pole"] = "lighted-big-electric-pole-lrt"
 turret_to_pole_map["repair-turret-substation"] = "lighted-substation-lrt"
+-- Отношение столба к турели, чтобы не искать долго. См data-updates.lua
+local pole_to_turret_map = {}
+for turret, pole in pairs(turret_to_pole_map) do pole_to_turret_map[pole] = turret end
 
 script.on_event(
     { defines.events.on_built_entity,
@@ -49,3 +52,26 @@ script.on_event(
         end
     end
 )
+
+-- todo! Так как основная энтити у нас - это столб, а турель маскируется под столб, то при открытии столба - открываем турель, и наоборот.
+--[[ local requested_open_gui = nil
+script.on_event({ defines.events.on_gui_opened }, function(event)
+    if requested_open_gui then
+        requested_open_gui = nil
+        return
+    end
+    local player = game.players[event.player_index]
+    local entity = event.entity
+    if player and entity and event.gui_type == 1 then
+        local counterpart_name = turret_to_pole_map[entity.name] or pole_to_turret_map[entity.name]
+        if counterpart_name then
+            local counterparts = entity.surface.find_entities_filtered { position = entity.position, radius = 1,
+                name = counterpart_name, limit = 1 }
+            if counterparts and counterparts[1] then
+                requested_open_gui = counterparts[1].name
+                player.opened = counterparts[1]
+            end
+        end
+    end
+end)
+]]
