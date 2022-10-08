@@ -1,10 +1,13 @@
+local const = require("util.const")
+
 -- Отношение турели к столбу, чтобы не искать долго. См data-updates.lua
 local turret_to_pole_map = {}
-turret_to_pole_map["repair-turret-pole"] = "lighted-big-electric-pole-lrt"
-turret_to_pole_map["repair-turret-substation"] = "lighted-substation-lrt"
 -- Отношение столба к турели, чтобы не искать долго. См data-updates.lua
 local pole_to_turret_map = {}
-for turret, pole in pairs(turret_to_pole_map) do pole_to_turret_map[pole] = turret end
+for _, variant in pairs(const.variants) do
+    turret_to_pole_map["repair-turret-" .. variant] = "lighted-" .. variant .. "-lrt"
+    pole_to_turret_map["lighted-" .. variant .. "-lrt"] = "repair-turret-" .. variant
+end
 
 script.on_event(
     { defines.events.on_built_entity,
@@ -13,22 +16,17 @@ script.on_event(
         defines.events.script_raised_revive },
     function(event)
         local entity = event.created_entity or event.entity
-        if entity then
-            for turret, _ in pairs(turret_to_pole_map) do
-                if entity.name == turret then
-                    local player = game.players[event.player_index]
-                    local pole = entity.surface.create_entity {
-                        name = turret_to_pole_map[entity.name],
-                        position = entity.position,
-                        force = entity.force,
-                        player = player,
-                        raise_built = true
-                    }
-                    pole.destructible = false
-                    pole.minable = false
-                end
-            end
-        end
+        if not entity then return end
+        local pole_name = turret_to_pole_map[entity.name]
+        if not pole_name then return end
+        local player = event.player_index and game.players[event.player_index] or nil
+        entity.surface.create_entity {
+            name = pole_name,
+            position = entity.position,
+            force = entity.force,
+            player = player,
+            raise_built = true
+        }
     end)
 
 script.on_event(
@@ -37,18 +35,19 @@ script.on_event(
         defines.events.on_entity_died,
         defines.events.script_raised_destroy },
     function(event)
-        for turret, pole in pairs(turret_to_pole_map) do
-            if event.entity.name == turret then
-                local center = event.entity.position
-                local nearbyPoles = event.entity.surface.find_entities_filtered {
-                    position = event.entity.position,
-                    radius = 1,
-                    name = pole
-                }
-                for _, entity in pairs(nearbyPoles) do
-                    entity.destroy { raise_destroy = true }
-                end
-            end
+        local entity = event.entity
+        if not entity then return end
+        -- При удалении столба из скрипта - ничего не удаляем
+        if event.name == defines.events.script_raised_destroy and pole_to_turret_map[entity.name] then return end
+        local to_remove = turret_to_pole_map[entity.name] or pole_to_turret_map[entity.name]
+        if not to_remove then return end
+        local nearbyPoles = event.entity.surface.find_entities_filtered {
+            position = event.entity.position,
+            radius = 1,
+            name = to_remove
+        }
+        for _, nearby in pairs(nearbyPoles) do
+            nearby.destroy { raise_destroy = true }
         end
     end
 )

@@ -1,78 +1,82 @@
 local flib = require('__flib__.data-util')
-local mod_id = "__lighted-repair-turret__"
-require(mod_id .. ".data.technologies")
+local const = require("util.const")
+local find_variant_technology_info = require("util.find_variant_technology_info")
 
--- Переменная локальная в LPP+, копипастим...
-local lighted_icon = { icon = "__LightedPolesPlus__/graphics/icons/lighted.png",
-    icon_size = 32,
-    tint = { r = 1, g = 1, b = 1, a = 0.85 }
-}
+local function make_variant_prototypes(variant)
+    local name = "repair-turret-" .. variant
+    -- Проверяем, что вариант имеет предмет и он столб
+    if not data.raw.item[variant] or not data.raw["electric-pole"][variant] then return end
 
--- Копии прототипов столбов. LPP+ сдалает из них освещенные столбы, которые будут создаваться при установке ремонтных турелей.
--- Затем эти прототипы удалятся в data-updates.lua
-local function make_temporary_pole(oldName)
-    local item = flib.copy_prototype(data.raw.item[oldName], oldName .. "-lrt", false)
-    local pole = flib.copy_prototype(data.raw["electric-pole"][oldName], oldName .. "-lrt", false)
-    local c = pole.collision_box[2][1] / 2
-    item.place_result = pole.name
-    pole.minable.result = item.name
-    pole.selection_box = { { -c, -c }, { c, c } }
-    pole.collision_mask = { "resource-layer" }
-    pole.working_sound = nil
-    pole.selection_priority = 60
-    return { item, pole }
+    -- Копии прототипов столбов. LPP+ сдалает из них освещенные столбы, которые будут создаваться при установке ремонтных турелей. Затем эти прототипы удалятся в data-updates.lua
+    local tempPoleItem = flib.copy_prototype(data.raw.item[variant], variant .. "-lrt", false)
+    local tempPole = flib.copy_prototype(data.raw["electric-pole"][variant], variant .. "-lrt", false)
+    tempPoleItem.place_result = tempPole.name
+    tempPoleItem.flags = { "hidden" }
+    local c = tempPole.collision_box[2][1] / 2
+    tempPole.selection_box = { { -c, -c }, { c, c } }
+    tempPole.collision_mask = { "resource-layer" }
+    tempPole.working_sound = nil
+    tempPole.selection_priority = 60
+    tempPole.minable = { result = tempPoleItem.name, mining_time = data.raw.roboport[const.rt].minable.mining_time }
+    tempPole.maximum_wire_distance = settings.startup.repair_turret_range.value + 1
+    tempPole.flags = { "not-blueprintable", "not-deconstructable", "no-copy-paste", "placeable-neutral", "not-upgradable" }
+
+    local itemTurret = flib.copy_prototype(data.raw.item[const.rt], name, false)
+    itemTurret.icons = flib.create_icons(itemTurret, { const.lighted_icon })
+    itemTurret.order = "b[turret]-az[repair-turret]-az[" .. name .. "]"
+    itemTurret.localised_name = { name }
+
+    local entityTurret = flib.copy_prototype(data.raw.roboport[const.rt], name, false)
+
+    local tech_unit, prerequisites, cable_count = find_variant_technology_info(variant, "repair-turret-lightning")
+
+    local technology = {
+        type = "technology",
+        name = name,
+        localised_name = { name },
+        icon_size = 182,
+        icon = "__lighted-repair-turret__/graphics/technology/repair_turret_icon.png",
+        effects = { { type = "unlock-recipe", recipe = name } },
+        prerequisites = prerequisites,
+        unit = tech_unit,
+        order = "c-k-a",
+    }
+
+    local recipe = {
+        type = "recipe",
+        name = name,
+        localised_name = { name },
+        enabled = false,
+        energy_required = 20,
+        ingredients = {
+            { const.rt, 1 },
+            { "copper-cable", cable_count },
+            { "lighted-" .. variant, 1 }
+        },
+        result = name,
+    }
+
+    return tempPoleItem, tempPole, itemTurret, entityTurret, technology, recipe
 end
 
-data:extend(make_temporary_pole("big-electric-pole"))
-data:extend(make_temporary_pole("substation"))
-
-local entityTurretPole = flib.copy_prototype(data.raw.roboport["repair-turret"], "repair-turret-pole", false)
-
-local itemTurretPole = flib.copy_prototype(data.raw.item["repair-turret"], "repair-turret-pole", false)
-itemTurretPole.icons = flib.create_icons(itemTurretPole, { lighted_icon })
-itemTurretPole.order = "b[turret]-az[repair-turret]-az[repair-turret-pole]"
-
--- Турель с лампой и большим столбом
+local tech_unit, prerequisites = find_variant_technology_info("small-lamp", const.rt)
 data:extend({
-    entityTurretPole,
-    itemTurretPole,
-    {
-        type = "recipe",
-        name = "repair-turret-pole",
-        localised_name = { "repair-turret-pole" },
-        enabled = false,
-        energy_required = 20,
-        ingredients = {
-            { "repair-turret", 1 },
-            { "copper-cable", 20 },
-            { "lighted-big-electric-pole", 1 }
-        },
-        result = "repair-turret-pole",
-    },
-
+    -- Базовая технология - ничего не открывает. Чисто для усложнения.
+    { type = "technology",
+        name = "repair-turret-lightning",
+        localised_name = { "repair-turret-lightning" },
+        icon_size = 182,
+        icon = "__lighted-repair-turret__/graphics/technology/repair_turret_icon.png",
+        prerequisites = prerequisites,
+        unit = tech_unit,
+        order = "c-k-a" }
 })
 
-local entityTurretSubstation = flib.copy_prototype(data.raw.roboport["repair-turret"], "repair-turret-substation", false)
+local dataTable = {}
+for _, variant in pairs(const.variants) do
+    for _, prototype in pairs({ make_variant_prototypes(variant) }) do
+        table.insert(dataTable, prototype)
+    end
+end
 
-local itemTurretSubstation = flib.copy_prototype(data.raw.item["repair-turret"], "repair-turret-substation", false)
-itemTurretSubstation.icons = flib.create_icons(itemTurretSubstation, { lighted_icon })
-itemTurretSubstation.order = "b[turret]-az[repair-turret]-az[repair-turret-substation]"
-
--- Турель с лампой и подстанцией
-data:extend({
-    entityTurretSubstation,
-    itemTurretSubstation,
-    {
-        type = "recipe",
-        name = itemTurretSubstation.name,
-        localised_name = { itemTurretSubstation.name },
-        enabled = false,
-        energy_required = 20,
-        ingredients = {
-            { "repair-turret", 1 },
-            { "copper-cable", 100 },
-            { "lighted-substation", 1 }
-        },
-        result = itemTurretSubstation.name,
-    }
-})
+data:extend(dataTable)
