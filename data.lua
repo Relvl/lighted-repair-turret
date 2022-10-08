@@ -2,30 +2,25 @@ local flib = require('__flib__.data-util')
 local mod_id = "__lighted-repair-turret__"
 require(mod_id .. ".data.technologies")
 
--- Основная концепция в том, что мы создаем столб по внешнему виду неотличимый от ремонтной турели.
--- LPP+ для такого столба создаст "ламповую" версию, и затем мы удаляем оригинальный столб. В итоге при постройке LPP+ будет спавнить свою лампу в него.
--- Далее мы создаем невидимую копию турели, которую так же спавним при установке этого столба.
--- В итоге мы сможем ставить турели как столбы, протягиванием. К тому же будут видны тени проводов перед установкой. Шикарно.
-
 -- Переменная локальная в LPP+, копипастим...
 local lighted_icon = { icon = "__LightedPolesPlus__/graphics/icons/lighted.png",
     icon_size = 32,
     tint = { r = 1, g = 1, b = 1, a = 0.85 }
 }
 
--- Копии прототипов столбов. LightedPolesPlus сдалает из них освещенные столбы, которые будут создаваться при установке ремонтных турелей.
+-- Копии прототипов столбов. LPP+ сдалает из них освещенные столбы, которые будут создаваться при установке ремонтных турелей.
 -- Затем эти прототипы удалятся в data-updates.lua
 local function make_temporary_pole(oldName)
-    local tempItem = flib.copy_prototype(data.raw.item[oldName], oldName .. "-lrt", false)
-    local tempPole = flib.copy_prototype(data.raw["electric-pole"][oldName], oldName .. "-lrt", false)
-    local c = tempPole.collision_box[2][1] / 2
-    tempItem.place_result = tempPole.name
-    tempPole.minable.result = tempItem.name
-    tempPole.selection_box = { { -c, -c }, { c, c } }
-    tempPole.collision_mask = { "resource-layer" }
-    tempPole.working_sound = nil
-    tempPole.selection_priority = 60
-    return { tempItem, tempPole }
+    local item = flib.copy_prototype(data.raw.item[oldName], oldName .. "-lrt", false)
+    local pole = flib.copy_prototype(data.raw["electric-pole"][oldName], oldName .. "-lrt", false)
+    local c = pole.collision_box[2][1] / 2
+    item.place_result = pole.name
+    pole.minable.result = item.name
+    pole.selection_box = { { -c, -c }, { c, c } }
+    pole.collision_mask = { "resource-layer" }
+    pole.working_sound = nil
+    pole.selection_priority = 60
+    return { item, pole }
 end
 
 data:extend(make_temporary_pole("big-electric-pole"))
