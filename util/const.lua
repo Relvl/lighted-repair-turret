@@ -1,7 +1,8 @@
 return {
     mod_id = "__lighted-repair-turret__",
     rt = "repair-turret",
-    rt_mod_id = "__LightedPolesPlus__",
+    rt_mod_id = "__Repair_Turret__",
+    lpp_mod_id = "__LightedPolesPlus__",
     variants = { "big-electric-pole", "substation" },
     -- Переменная локальная в LPP+, копипастим...
     lighted_icon = { icon = "__LightedPolesPlus__/graphics/icons/lighted.png",
