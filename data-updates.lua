@@ -20,7 +20,12 @@ for _, variant in pairs(const.variants) do
         end
     end
 
-    data.raw.item[lighed_name].place_result = "repair-turret-" .. variant
-    data.raw["roboport"]["repair-turret-" .. variant].minable.result = "repair-turret-" .. variant
+    if const.rt_remote_present then
+        data.raw.item[lighed_name].place_result = "repair-turret-" .. variant
+        data.raw["roboport"]["repair-turret-" .. variant].minable.result = "repair-turret-" .. variant
+    else
+        data.raw.item[lighed_name].place_result = const.rt
+    end
+
     data.raw["electric-pole"][lighed_name].minable.result = "repair-turret-" .. variant
 end

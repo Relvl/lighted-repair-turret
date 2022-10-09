@@ -4,6 +4,38 @@ local const = require("util.const")
 local find_variant_technology_info = require("util.find_variant_technology_info")
 local img = const.mod_id .. "/graphics/entity/"
 
+--[[ todo! Klonan не предусмотрел возможности копировать прото турели... 
+    Ждем его одобрения на PR, или когда сам сделает.
+    Пока что просто создаем обычную турель, если нет интерфейса.
+    ------------------------------------------------------------------------
+    Создаем копию турели, назначаем ей новые тайлы, и вообще настраиваем её.
+    Эта турель будет создаваться автоматически при установке нового столба.
+]]
+local function make_repair_turret_proto(variant)
+    if const.rt_remote_present then
+        local name = "repair-turret-" .. variant
+        local entityTurret = flib.copy_prototype(data.raw.roboport[const.rt], name, false)
+        entityTurret.localised_name = { "rlt-turret-access-point" }
+        entityTurret.flags = {
+            "not-blueprintable",
+            "not-deconstructable",
+            "no-copy-paste",
+            "placeable-neutral",
+            "not-upgradable"
+        }
+        entityTurret.selection_box = { { -c, -c }, { c, c } }
+        entityTurret.collision_mask = { "resource-layer" }
+        entityTurret.selection_priority = 60
+
+        entityTurret.base.layers[1].filename = img .. "repair_turret_slim.png"
+        entityTurret.base.layers[2].filename = img .. "repair_turret_shadow_slim.png"
+
+        entityTurret.base_animation.layers[1].filename = img .. "hr-roboport-base-animation_crop.png"
+
+        data:extend({ entityTurret })
+    end
+end
+
 local function make_variant_prototypes(variant)
     local name = "repair-turret-" .. variant
     -- Проверяем, что вариант имеет предмет и он столб
@@ -37,21 +69,7 @@ local function make_variant_prototypes(variant)
     itemTurret.localised_name = { const.rt .. "-" .. variant }
     itemTurret.place_result = "lighted-" .. tempPoleEntity.name
 
-    -- Невидимая турель
-    -- Косяк же... RT проверяет энтити только по их имени.
-    local entityTurret = flib.copy_prototype(data.raw.roboport[const.rt], name, false)
-    entityTurret.name = itemTurret.name
-    entityTurret.localised_name = { "rlt-turret-access-point" }
-    entityTurret.flags = { "not-blueprintable", "not-deconstructable", "no-copy-paste", "placeable-neutral",
-        "not-upgradable" }
-    entityTurret.selection_box = { { -c, -c }, { c, c } }
-    entityTurret.collision_mask = { "resource-layer" }
-    entityTurret.selection_priority = 60
-
-    entityTurret.base.layers[1].filename = img .. "repair_turret_slim.png"
-    entityTurret.base.layers[2].filename = img .. "repair_turret_shadow_slim.png"
-
-    entityTurret.base_animation.layers[1].filename = img .. "hr-roboport-base-animation_crop.png"
+    make_repair_turret_proto(variant)
 
     local tech_unit, prerequisites, cable_count = find_variant_technology_info(variant, const.rt .. "-lightning")
 
@@ -79,7 +97,7 @@ local function make_variant_prototypes(variant)
         result = name,
     }
 
-    return tempPoleItem, tempPoleEntity, itemTurret, entityTurret, technology, recipe
+    return tempPoleItem, tempPoleEntity, itemTurret, technology, recipe
 end
 
 local tech_unit, prerequisites = find_variant_technology_info("small-lamp", const.rt)

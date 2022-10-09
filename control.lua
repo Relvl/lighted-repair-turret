@@ -5,8 +5,13 @@ local turret_to_pole_map = {}
 -- Отношение столба к турели, чтобы не искать долго. См data-updates.lua
 local pole_to_turret_map = {}
 for _, variant in pairs(const.variants) do
-    turret_to_pole_map["repair-turret-" .. variant] = "lighted-" .. variant .. "-lrt"
-    pole_to_turret_map["lighted-" .. variant .. "-lrt"] = "repair-turret-" .. variant
+    if const.rt_remote_present then
+        turret_to_pole_map["repair-turret-" .. variant] = "lighted-" .. variant .. "-lrt"
+        pole_to_turret_map["lighted-" .. variant .. "-lrt"] = "repair-turret-" .. variant
+    else
+        turret_to_pole_map["repair-turret" .. variant] = "lighted-" .. variant .. "-lrt"
+        pole_to_turret_map["lighted-" .. variant .. "-lrt"] = "repair-turret"
+    end
 end
 
 script.on_event(
@@ -41,9 +46,19 @@ script.on_event(
         if not entity then return end
 
         -- При удалении турели из скрипта - ничего не удаляем
-        if event.name == defines.events.script_raised_destroy and turret_to_pole_map[entity.name] then return end
+        if event.name == defines.events.script_raised_destroy and
+            (turret_to_pole_map[entity.name] or entity.name == const.rt) then return end
 
         local to_remove = turret_to_pole_map[entity.name] or pole_to_turret_map[entity.name]
+
+        -- Если Klonan еще не выкатил правку, добавляющую интерфейс - удаляем все столбы ниже обычной турели
+        if entity.name == const.rt and not const.rt_remote_present then
+            to_remove = {}
+            for key, _ in pairs(pole_to_turret_map) do
+                table.insert(to_remove, key)
+            end
+        end
+
         if not to_remove then return end
 
         local nearbyPoles = event.entity.surface.find_entities_filtered {
@@ -51,13 +66,24 @@ script.on_event(
             radius = 1,
             name = to_remove
         }
+
+        if nearbyPoles[1] and event.player_index and not const.rt_remote_present then
+            event.buffer.clear()
+            for _, e in pairs(nearbyPoles) do
+                for _, product in pairs(e.prototype.mineable_properties.products) do
+                    event.buffer.insert({ name = product.name, count = product.amount or 1 --[[@as uint]] })
+                end
+            end
+        end
+
         for _, nearby in pairs(nearbyPoles) do
             nearby.destroy { raise_destroy = true }
         end
     end
 )
 
-script.on_event(defines.events.on_player_cursor_stack_changed, function(event)
-    -- todo понять как проверить, что _берет_ игрок, и если это столбы - то брать турель.
-    -- Тогда можно будет и за центр поднимать.
+script.on_init(function()
+end)
+script.on_load(function()
+    const.rt_remote_call()
 end)
