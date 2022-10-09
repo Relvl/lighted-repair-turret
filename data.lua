@@ -7,33 +7,47 @@ local function make_variant_prototypes(variant)
     -- Проверяем, что вариант имеет предмет и он столб
     if not data.raw.item[variant] or not data.raw["electric-pole"][variant] then return end
 
-    -- Копии прототипов столбов. LPP+ сдалает из них освещенные столбы, которые будут создаваться при установке ремонтных турелей. Затем эти прототипы удалятся в data-updates.lua
-    local tempPoleItem = flib.copy_prototype(data.raw.item[variant], variant .. "-lrt", false)
-    local tempPole = flib.copy_prototype(data.raw["electric-pole"][variant], variant .. "-lrt", false)
-    tempPoleItem.place_result = tempPole.name
-    tempPoleItem.flags = { "hidden" }
-    local c = tempPole.collision_box[2][1] / 2
-    tempPole.selection_box = { { -c, -c }, { c, c } }
-    tempPole.collision_mask = { "resource-layer" }
-    tempPole.working_sound = nil
-    tempPole.selection_priority = 60
-    tempPole.minable = { result = tempPoleItem.name, mining_time = data.raw.roboport[const.rt].minable.mining_time }
-    tempPole.maximum_wire_distance = settings.startup.repair_turret_range.value + 1
-    tempPole.flags = { "not-blueprintable", "not-deconstructable", "no-copy-paste", "placeable-neutral", "not-upgradable" }
+    -- Основная энтити - это столб. Так что создаем предмет и энтити настоящего столба,
+    -- LPP+ создаст для них версии с лампой, потом удалим и предмет и энтитю.
+    -- Использовать будем именно LPP+ варианты.
+    -- Турель теперь будет либо не видна, либо только анимацию оставлю, "шоп красиво".
+    -- Провода всё-таки должны быть оставлены "как было" - на непрямых поворотах это жопа. Да и в чанки плохо вписывается.
 
+    -- Временные заготовки для "лампофикации"
+    local tempPoleItem = flib.copy_prototype(data.raw.item[variant], variant .. "-lrt", false)
+    local tempPoleEntity = flib.copy_prototype(data.raw["electric-pole"][variant], variant .. "-lrt", false)
+    tempPoleItem.place_result = tempPoleEntity.name
+    tempPoleItem.flags = { "hidden" }
+
+    local c = tempPoleEntity.collision_box[2][1] / 2
+    tempPoleEntity.minable = { result = tempPoleItem.name, mining_time = data.raw.roboport[const.rt].minable.mining_time }
+
+    -- Основной предмет
     local itemTurret = flib.copy_prototype(data.raw.item[const.rt], name, false)
     itemTurret.icons = flib.create_icons(itemTurret, { const.lighted_icon })
-    itemTurret.order = "b[turret]-az[repair-turret]-az[" .. name .. "]"
-    itemTurret.localised_name = { name }
+    itemTurret.order = "b[turret]-az[" .. const.rt .. "]-az[" .. name .. "]"
+    itemTurret.localised_name = { const.rt .. "-" .. variant }
+    itemTurret.place_result = "lighted-" .. tempPoleEntity.name
 
+    -- Невидимая турель
     local entityTurret = flib.copy_prototype(data.raw.roboport[const.rt], name, false)
+    entityTurret.name = itemTurret.name
+    entityTurret.localised_name = { "rlt-turret-access-point" }
+    entityTurret.flags = { "not-blueprintable", "not-deconstructable", "no-copy-paste", "placeable-neutral",
+        "not-upgradable" }
+    entityTurret.selection_box = { { -c, -c }, { c, c } }
+    entityTurret.collision_mask = { "resource-layer" }
+    entityTurret.selection_priority = 60
+    entityTurret.base.layers[1].filename = const.mod_id .. "/graphics/repair_turret_crop.png"
+    entityTurret.base.layers[2].filename = const.mod_id .. "/graphics/repair_turret_shadow_crop.png"
+    entityTurret.base_animation.layers[1].filename = const.mod_id .. "/graphics/hr-roboport-base-animation_crop.png"
 
-    local tech_unit, prerequisites, cable_count = find_variant_technology_info(variant, "repair-turret-lightning")
+    --
+    local tech_unit, prerequisites, cable_count = find_variant_technology_info(variant, const.rt .. "-lightning")
 
     local technology = {
         type = "technology",
         name = name,
-        localised_name = { name },
         icon_size = 182,
         icon = "__lighted-repair-turret__/graphics/technology/repair_turret_icon.png",
         effects = { { type = "unlock-recipe", recipe = name } },
@@ -45,7 +59,6 @@ local function make_variant_prototypes(variant)
     local recipe = {
         type = "recipe",
         name = name,
-        localised_name = { name },
         enabled = false,
         energy_required = 20,
         ingredients = {
@@ -56,15 +69,14 @@ local function make_variant_prototypes(variant)
         result = name,
     }
 
-    return tempPoleItem, tempPole, itemTurret, entityTurret, technology, recipe
+    return tempPoleItem, tempPoleEntity, itemTurret, entityTurret, technology, recipe
 end
 
 local tech_unit, prerequisites = find_variant_technology_info("small-lamp", const.rt)
 data:extend({
     -- Базовая технология - ничего не открывает. Чисто для усложнения.
     { type = "technology",
-        name = "repair-turret-lightning",
-        localised_name = { "repair-turret-lightning" },
+        name = const.rt .. "-lightning",
         icon_size = 182,
         icon = "__lighted-repair-turret__/graphics/technology/repair_turret_icon.png",
         prerequisites = prerequisites,

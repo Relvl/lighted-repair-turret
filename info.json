@@ -1,10 +1,10 @@
 {
     "name": "lighted-repair-turret",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "title": "Lighted Repair Turret",
     "author": "Johnson1893",
     "homepage": "",
-    "description": "Crossover between Lighted Electric Poles Plus and Repai Turret mods!\nNow we can produce repair turret with integrated lamp or/and large electric pole!",
+    "description": "Crossover between Lighted Electric Poles Plus and Repair Turret mods!\nNow we can produce repair turret with integrated lamp and large electric pole!",
     "factorio_version": "1.1",
     "dependencies": [
         "Repair_Turret >= 1.0.2",
