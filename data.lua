@@ -1,6 +1,8 @@
 local flib = require('__flib__.data-util')
+local flib_table = require('__flib__.table')
 local const = require("util.const")
 local find_variant_technology_info = require("util.find_variant_technology_info")
+local img = const.mod_id .. "/graphics/entity/"
 
 local function make_variant_prototypes(variant)
     local name = "repair-turret-" .. variant
@@ -22,6 +24,12 @@ local function make_variant_prototypes(variant)
     local c = tempPoleEntity.collision_box[2][1] / 2
     tempPoleEntity.minable = { result = tempPoleItem.name, mining_time = data.raw.roboport[const.rt].minable.mining_time }
 
+    tempPoleEntity.pictures.layers[1] = flib_table.deep_merge({
+        tempPoleEntity.pictures.layers[1].hr_version, {
+            filename = img .. "hr-big-electric-pole.png"
+        }
+    })
+
     -- Основной предмет
     local itemTurret = flib.copy_prototype(data.raw.item[const.rt], name, false)
     itemTurret.icons = flib.create_icons(itemTurret, { const.lighted_icon })
@@ -38,18 +46,19 @@ local function make_variant_prototypes(variant)
     entityTurret.selection_box = { { -c, -c }, { c, c } }
     entityTurret.collision_mask = { "resource-layer" }
     entityTurret.selection_priority = 60
-    entityTurret.base.layers[1].filename = const.mod_id .. "/graphics/repair_turret_crop.png"
-    entityTurret.base.layers[2].filename = const.mod_id .. "/graphics/repair_turret_shadow_crop.png"
-    entityTurret.base_animation.layers[1].filename = const.mod_id .. "/graphics/hr-roboport-base-animation_crop.png"
 
-    --
+    entityTurret.base.layers[1].filename = img .. "repair_turret_slim.png"
+    entityTurret.base.layers[2].filename = img .. "repair_turret_shadow_slim.png"
+
+    entityTurret.base_animation.layers[1].filename = img .. "hr-roboport-base-animation_crop.png"
+
     local tech_unit, prerequisites, cable_count = find_variant_technology_info(variant, const.rt .. "-lightning")
 
     local technology = {
         type = "technology",
         name = name,
         icon_size = 182,
-        icon = "__lighted-repair-turret__/graphics/technology/repair_turret_icon.png",
+        icon = const.mod_id .. "/graphics/technology/repair_turret_icon.png",
         effects = { { type = "unlock-recipe", recipe = name } },
         prerequisites = prerequisites,
         unit = tech_unit,
@@ -78,7 +87,7 @@ data:extend({
     { type = "technology",
         name = const.rt .. "-lightning",
         icon_size = 182,
-        icon = "__lighted-repair-turret__/graphics/technology/repair_turret_icon.png",
+        icon = const.mod_id .. "/graphics/technology/repair_turret_icon.png",
         prerequisites = prerequisites,
         unit = tech_unit,
         order = "c-k-a" }
