@@ -4,7 +4,8 @@ Date: 2022-10-08
   Changes:
     - Changed concept, sorry. Now poles is main entity. Stretch-building is too important for poles...
     - Restored original pole max wire length
-    - Uglify the animations
+    - Uglify the animations xD
+    - Repainted textures
 ---------------------------------------------------------------------------------------------------
 Version: 0.0.1
 Date: 2022-10-08
