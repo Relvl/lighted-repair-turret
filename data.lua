@@ -38,6 +38,7 @@ local function make_variant_prototypes(variant)
     itemTurret.place_result = "lighted-" .. tempPoleEntity.name
 
     -- Невидимая турель
+    -- Косяк же... RT проверяет энтити только по их имени.
     local entityTurret = flib.copy_prototype(data.raw.roboport[const.rt], name, false)
     entityTurret.name = itemTurret.name
     entityTurret.localised_name = { "rlt-turret-access-point" }
