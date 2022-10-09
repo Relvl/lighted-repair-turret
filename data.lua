@@ -26,7 +26,7 @@ local function make_variant_prototypes(variant)
 
     tempPoleEntity.pictures.layers[1] = flib_table.deep_merge({
         tempPoleEntity.pictures.layers[1].hr_version, {
-            filename = img .. "hr-big-electric-pole.png"
+            filename = img .. "hr-" .. variant .. ".png"
         }
     })
 
