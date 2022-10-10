@@ -8,15 +8,19 @@ local pole_to_turret_map = {}
 
 local pole_to_item_map = {}
 
+local pole_names = {}
+
 for _, variant in pairs(const.variants) do
+    local pole_name = "lighted-" .. variant .. "-lrt"
     if const.rt_remote_present then
-        turret_to_pole_map["repair-turret-" .. variant] = "lighted-" .. variant .. "-lrt"
-        pole_to_turret_map["lighted-" .. variant .. "-lrt"] = "repair-turret-" .. variant
+        turret_to_pole_map["repair-turret-" .. variant] = pole_name
+        pole_to_turret_map[pole_name] = "repair-turret-" .. variant
     else
-        turret_to_pole_map["repair-turret" .. variant] = "lighted-" .. variant .. "-lrt"
-        pole_to_turret_map["lighted-" .. variant .. "-lrt"] = "repair-turret"
+        turret_to_pole_map["repair-turret" .. variant] = pole_name
+        pole_to_turret_map[pole_name] = "repair-turret"
     end
-    pole_to_item_map["lighted-" .. variant .. "-lrt"] = "repair-turret-" .. variant
+    pole_to_item_map[pole_name] = "repair-turret-" .. variant
+    table.insert(pole_names, pole_name)
 end
 
 script.on_event(
@@ -88,7 +92,7 @@ script.on_event(
             name = to_remove
         }
 
-        if not const.rt_remote_present and nearbyPoles[1] and nearbyPoles[1].name ~= const.rt and event.player_index then
+        if not const.rt_remote_present and nearbyPoles[1] and nearbyPoles[1].name ~= const.rt then
             event.buffer.clear()
             for _, e in pairs(nearbyPoles) do
                 for _, product in pairs(e.prototype.mineable_properties.products) do
@@ -122,6 +126,22 @@ script.on_event(defines.events.on_player_pipette, function(event)
                 if counter_stack then
                     player.cursor_stack.transfer_stack(counter_stack)
                 end
+            end
+        end
+    end
+end)
+
+script.on_event(defines.events.on_marked_for_deconstruction, function(event)
+    if not event.entity then return end
+    if not const.rt_remote_present and event.entity.name == const.rt then
+        local nearest_poles = event.entity.surface.find_entities_filtered {
+            name = pole_names,
+            position = event.entity.position,
+            radius = 1
+        }
+        if nearest_poles[1].name then
+            for _, player in pairs(game.players) do
+                event.entity.cancel_deconstruction(player.force)
             end
         end
     end
