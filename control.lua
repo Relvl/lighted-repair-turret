@@ -107,30 +107,6 @@ script.on_event(
     end
 )
 
-script.on_event(defines.events.on_player_pipette, function(event)
-    if event.item then
-        local counterpart = pole_to_item_map[event.item.name]
-        if counterpart then
-            local player = game.players[event.player_index]
-            local inventory = player.get_main_inventory()
-            if player and inventory then
-                if not player.is_cursor_empty() then
-                    -- Удаляем неразрешенные предметы, либо очищаем курсор в инвентарь
-                    if pole_to_turret_map[player.cursor_stack.name] then
-                        player.cursor_stack.clear()
-                    else
-                        player.clear_cursor()
-                    end
-                end
-                local counter_stack = inventory.find_item_stack(counterpart)
-                if counter_stack then
-                    player.cursor_stack.transfer_stack(counter_stack)
-                end
-            end
-        end
-    end
-end)
-
 script.on_event(defines.events.on_marked_for_deconstruction, function(event)
     if not event.entity then return end
     if not const.rt_remote_present and event.entity.name == const.rt then
@@ -139,7 +115,7 @@ script.on_event(defines.events.on_marked_for_deconstruction, function(event)
             position = event.entity.position,
             radius = 1
         }
-        if nearest_poles[1].name then
+        if nearest_poles[1] and nearest_poles[1].name then
             for _, player in pairs(game.players) do
                 event.entity.cancel_deconstruction(player.force)
             end

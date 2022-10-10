@@ -28,5 +28,5 @@ for _, variant in pairs(const.variants) do
     end
 
     data.raw["electric-pole"][lighed_name].minable.result = "repair-turret-" .. variant
-    data.raw.item[lighed_name].place_result = nil
+    data.raw.item[lighed_name] = nil
 end
