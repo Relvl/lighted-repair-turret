@@ -1,5 +1,5 @@
 local const = require("util.const")
-local flib_migration = require("__flib__.migration")
+local flib_table = require("__flib__.table")
 
 -- Отношение турели к столбу, чтобы не искать долго. См data-updates.lua
 local turret_to_pole_map = {}
@@ -120,6 +120,18 @@ script.on_event(defines.events.on_marked_for_deconstruction, function(event)
                 event.entity.cancel_deconstruction(player.force)
             end
         end
+    end
+end)
+
+script.on_event(defines.events.on_player_setup_blueprint, function(event)
+    local player = game.players[event.player_index]
+    if player.cursor_stack and player.cursor_stack.is_blueprint then
+        local bp_entityes = player.cursor_stack.get_blueprint_entities() --[[@as table]]
+        player.cursor_stack.set_blueprint_entities(
+            flib_table.filter(bp_entityes, function(v)
+                return v.name ~= const.rt
+            end, true)
+        )
     end
 end)
 

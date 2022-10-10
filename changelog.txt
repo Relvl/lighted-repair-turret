@@ -1,7 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.3
+Date: 2022-10-10
+  Bugfixes:
+    - Another part of shadow entity issues... Well, now looks good. One thing - i dont find a way to remove RT from the blueprint, so... just place BP's with Shift holding.
+---------------------------------------------------------------------------------------------------
 Version: 0.1.2
 Date: 2022-10-10
-  Fixed:
+  Bugfixes:
     - Few turret blueprinting and copying issues
     - Poles' wrong collision layer
 ---------------------------------------------------------------------------------------------------
