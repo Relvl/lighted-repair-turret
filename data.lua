@@ -63,16 +63,13 @@ local function make_variant_prototypes(variant)
 
     if not const.rt_remote_present then
         tempPoleEntity.flags = {
-            "not-blueprintable",
-            "not-deconstructable",
-            "no-copy-paste",
             "placeable-neutral",
-            "not-upgradable"
+            "not-upgradable",
+            "player-creation"
         }
         local c = tempPoleEntity.collision_box[2][1] / 1.07
         tempPoleEntity.selection_box = { { -c, -c }, { c, c } }
         tempPoleEntity.selection_priority = 60
-        tempPoleEntity.collision_mask = { "resource-layer" }
     end
 
     -- Основной предмет

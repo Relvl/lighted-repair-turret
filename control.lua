@@ -5,6 +5,9 @@ local flib_migration = require("__flib__.migration")
 local turret_to_pole_map = {}
 -- Отношение столба к турели, чтобы не искать долго. См data-updates.lua
 local pole_to_turret_map = {}
+
+local pole_to_item_map = {}
+
 for _, variant in pairs(const.variants) do
     if const.rt_remote_present then
         turret_to_pole_map["repair-turret-" .. variant] = "lighted-" .. variant .. "-lrt"
@@ -13,6 +16,7 @@ for _, variant in pairs(const.variants) do
         turret_to_pole_map["repair-turret" .. variant] = "lighted-" .. variant .. "-lrt"
         pole_to_turret_map["lighted-" .. variant .. "-lrt"] = "repair-turret"
     end
+    pole_to_item_map["lighted-" .. variant .. "-lrt"] = "repair-turret-" .. variant
 end
 
 script.on_event(
@@ -23,6 +27,22 @@ script.on_event(
     function(event)
         local entity = event.created_entity or event.entity
         if not entity then return end
+
+        -- При размещении призраков, если размещены одновременно столб и турель - турель сносим. Порция костылей из-за лени @Klonan
+        if entity.name == "entity-ghost" then
+            if pole_to_turret_map[entity.ghost_name] then
+                local nearest_turret_ghost = entity.surface.find_entities_filtered {
+                    name = "entity-ghost",
+                    ghost_name = const.rt,
+                    position = entity.position,
+                    radius = 1
+                }
+                for _, nearest in pairs(nearest_turret_ghost) do
+                    nearest.destroy()
+                end
+                return
+            end
+        end
 
         local to_build = pole_to_turret_map[entity.name]
         if not to_build then return end
@@ -68,7 +88,7 @@ script.on_event(
             name = to_remove
         }
 
-        if nearbyPoles[1] and event.player_index and not const.rt_remote_present then
+        if not const.rt_remote_present and nearbyPoles[1] and nearbyPoles[1].name ~= const.rt and event.player_index then
             event.buffer.clear()
             for _, e in pairs(nearbyPoles) do
                 for _, product in pairs(e.prototype.mineable_properties.products) do
@@ -83,8 +103,30 @@ script.on_event(
     end
 )
 
-script.on_init(function()
+script.on_event(defines.events.on_player_pipette, function(event)
+    if event.item then
+        local counterpart = pole_to_item_map[event.item.name]
+        if counterpart then
+            local player = game.players[event.player_index]
+            local inventory = player.get_main_inventory()
+            if player and inventory then
+                if not player.is_cursor_empty() then
+                    -- Удаляем неразрешенные предметы, либо очищаем курсор в инвентарь
+                    if pole_to_turret_map[player.cursor_stack.name] then
+                        player.cursor_stack.clear()
+                    else
+                        player.clear_cursor()
+                    end
+                end
+                local counter_stack = inventory.find_item_stack(counterpart)
+                if counter_stack then
+                    player.cursor_stack.transfer_stack(counter_stack)
+                end
+            end
+        end
+    end
 end)
+
 script.on_load(function()
     const.rt_remote_call()
 end)
