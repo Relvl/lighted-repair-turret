@@ -1,4 +1,5 @@
 local const = require("util.const")
+local flib_migration = require("__flib__.migration")
 
 -- Отношение турели к столбу, чтобы не искать долго. См data-updates.lua
 local turret_to_pole_map = {}
@@ -87,3 +88,5 @@ end)
 script.on_load(function()
     const.rt_remote_call()
 end)
+
+require("migration")

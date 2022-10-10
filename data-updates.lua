@@ -25,6 +25,7 @@ for _, variant in pairs(const.variants) do
         data.raw["roboport"]["repair-turret-" .. variant].minable.result = "repair-turret-" .. variant
     else
         data.raw.item[lighed_name].place_result = const.rt
+        data.raw["electric-pole"][lighed_name].localised_name = { "entity-name.rlt-turret-power-point" }
     end
 
     data.raw["electric-pole"][lighed_name].minable.result = "repair-turret-" .. variant

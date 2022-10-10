@@ -11,7 +11,7 @@ local img = const.mod_id .. "/graphics/entity/"
     Создаем копию турели, назначаем ей новые тайлы, и вообще настраиваем её.
     Эта турель будет создаваться автоматически при установке нового столба.
 ]]
-local function make_repair_turret_proto(variant)
+local function make_repair_turret_proto(variant, tempPoleEntity)
     if const.rt_remote_present then
         local name = "repair-turret-" .. variant
         local entityTurret = flib.copy_prototype(data.raw.roboport[const.rt], name, false)
@@ -23,6 +23,7 @@ local function make_repair_turret_proto(variant)
             "placeable-neutral",
             "not-upgradable"
         }
+        local c = tempPoleEntity.collision_box[2][1] / 2
         entityTurret.selection_box = { { -c, -c }, { c, c } }
         entityTurret.collision_mask = { "resource-layer" }
         entityTurret.selection_priority = 60
@@ -53,14 +54,26 @@ local function make_variant_prototypes(variant)
     tempPoleItem.place_result = tempPoleEntity.name
     tempPoleItem.flags = { "hidden" }
 
-    local c = tempPoleEntity.collision_box[2][1] / 2
     tempPoleEntity.minable = { result = tempPoleItem.name, mining_time = data.raw.roboport[const.rt].minable.mining_time }
-
     tempPoleEntity.pictures.layers[1] = flib_table.deep_merge({
         tempPoleEntity.pictures.layers[1].hr_version, {
             filename = img .. "hr-" .. variant .. ".png"
         }
     })
+
+    if not const.rt_remote_present then
+        tempPoleEntity.flags = {
+            "not-blueprintable",
+            "not-deconstructable",
+            "no-copy-paste",
+            "placeable-neutral",
+            "not-upgradable"
+        }
+        local c = tempPoleEntity.collision_box[2][1] / 1.07
+        tempPoleEntity.selection_box = { { -c, -c }, { c, c } }
+        tempPoleEntity.selection_priority = 60
+        tempPoleEntity.collision_mask = { "resource-layer" }
+    end
 
     -- Основной предмет
     local itemTurret = flib.copy_prototype(data.raw.item[const.rt], name, false)
@@ -69,7 +82,7 @@ local function make_variant_prototypes(variant)
     itemTurret.localised_name = { const.rt .. "-" .. variant }
     itemTurret.place_result = "lighted-" .. tempPoleEntity.name
 
-    make_repair_turret_proto(variant)
+    make_repair_turret_proto(variant, tempPoleEntity)
 
     local tech_unit, prerequisites, cable_count = find_variant_technology_info(variant, const.rt .. "-lightning")
 

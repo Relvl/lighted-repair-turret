@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 2022-10-10
+  Changes:
+    - Added migration script from v<0.1.0 - if where found any unpaired poles, then will added Repair Turret
+    - Temporary decreased selection of new poles, and it's selection brings to front, until RT will not be fixed
+---------------------------------------------------------------------------------------------------
 Version: 0.0.4
 Date: 2022-10-10
   Changes:
